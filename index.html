@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <link rel="stylesheet" href="style.css">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Сюрприз!</title>
@@ -9,15 +8,13 @@
 </head>
 <body>
   <div class="container">
-    <!-- Видео -->
-    <video id="myVideo" controls autoplay>
-  <source src="https://drive.google.com/uc?export=download&id=1se3z6sTsbxPARp9iKTpvxaMaSHAfNs70" type="video/mp4">
-  Ваш браузер не поддерживает видео.
-</video>
+    <!-- Видео с Google Диска через iframe с автозапуском -->
+    <iframe 
+      src="https://drive.google.com/file/d/1se3z6sTsbxPARp9iKTpvxaMaSHAfNs70/preview?autoplay=1" 
+      width="560" height="315" allow="autoplay" allowfullscreen>
+    </iframe>
 
-    </video>
-    
-    <!-- Кнопка -->
+    <!-- Кнопка для открытия фото -->
     <button id="yesButton">Да!</button>
   </div>
 
