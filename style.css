@@ -1,0 +1,20 @@
+#yesButton {
+  background-color: #ff4081;
+  color: white;
+  border: none;
+  padding: 15px 40px;
+  font-size: 1.4rem;           /* чуть крупнее */
+  font-family: 'Poppins', sans-serif;  /* красивый шрифт */
+  font-weight: 700;             /* жирный текст */
+  text-transform: uppercase;    /* заглавные буквы */
+  letter-spacing: 1px;          /* небольшие пробелы между буквами */
+  border-radius: 50px;
+  cursor: pointer;
+  transition: transform 0.3s, box-shadow 0.3s, background-color 0.3s;
+}
+
+#yesButton:hover {
+  transform: scale(1.05);
+  box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+  background-color: #ff1f75; /* немного ярче при наведении */
+}
