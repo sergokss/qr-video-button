@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Видео на весь экран</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #000;
+            overflow: hidden;
+            height: 100vh;
+            position: relative;
+        }
+
+        .video-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        #fullscreen-video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .photo-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 20;
+        }
+
+        #fullscreen-photo {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        .buttons-container {
+            position: fixed;
+            bottom: 50px;
+            left: 0;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            z-index: 2;
+            pointer-events: none;
+        }
+
+        .action-button {
+            color: white;
+            border: none;
+            padding: 20px 40px;
+            font-size: 24px;
+            font-weight: bold;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            pointer-events: auto;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            min-width: 120px;
+        }
+
+        .yes-button {
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+        }
+
+        .no-button {
+            background: linear-gradient(45deg, #f44336, #d32f2f);
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .no-button.hidden {
+            opacity: 0;
+            transform: scale(0);
+            pointer-events: none;
+        }
+
+        .action-button:active {
+            transform: scale(0.95);
+        }
+
+        .no-button:active {
+            transform: scale(0.95);
+        }
+
+        .tap-message {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            text-align: center;
+            z-index: 3;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 20px;
+            border-radius: 10px;
+            display: none;
+        }
+
+        .sound-button {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            z-index: 4;
+            font-size: 20px;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            max-width: 300px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            animation: popup 0.3s ease-out;
+        }
+
+        @keyframes popup {
+            0% { transform: scale(0.7); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .modal-text {
+            font-size: 20px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        .modal-ok-button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            font-size: 16px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .modal-ok-button:active {
+            transform: scale(0.95);
+        }
+
+        .audio-player {
+            position: fixed;
+            bottom: 10px;
+            left: 10px;
+            z-index: 6;
+            opacity: 0.7;
+            transition: opacity 0.3s ease;
+        }
+
+        .audio-player:hover {
+            opacity: 1;
+        }
+
+        #background-audio {
+            width: 200px;
+            height: 30px;
+        }
+
+        .back-button {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            z-index: 21;
+            display: none;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="tap-message" id="tapMessage">
+        Нажмите на экран для запуска видео
+    </div>
+
+    <button class="sound-button" id="soundButton" onclick="toggleSound()">🔇</button>
+    <button class="back-button" id="backButton" onclick="goBackToVideo()">← Назад к видео</button>
+
+    <!-- Аудио плеер для фоновой музыки -->
+    <div class="audio-player">
+        <audio id="background-audio" loop controls>
+            <!-- ⬇️ ФАЙЛ С МУЗЫКОЙ The Hills - 🔥 The Weeknd ⬇️ -->
+            <source src="The Hills - 🔥 The Weeknd.mp3" type="audio/mpeg">
+            <!-- ⬆️ ФАЙЛ С МУЗЫКОЙ The Hills - 🔥 The Weeknd ⬆️ -->
+            Ваш браузер не поддерживает аудио.
+        </audio>
+    </div>
+
+    <!-- Контейнер для фото -->
+    <div class="photo-container" id="photoContainer">
+        <!-- ⬇️ ФОТО БУДЕТ ЗАГРУЖЕНО ДИНАМИЧЕСКИ ⬇️ -->
+        <img id="fullscreen-photo" src="" alt="Photo">
+    </div>
+
+    <!-- Модальное окно -->
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal-content">
+            <div class="modal-text">а если хорошо подумать?</div>
+            <button class="modal-ok-button" onclick="closeModal()">Ладно...</button>
+        </div>
+    </div>
+
+    <div class="video-container">
+        <video id="fullscreen-video" playsinline loop>
+            <!-- ⬇️ УКАЖИТЕ ИМЯ ВАШЕГО ВИДЕО ФАЙЛА ⬇️ -->
+            <source src="videoplayback.mp4" type="video/mp4">
+            <!-- ⬆️ УКАЖИТЕ ИМЯ ВАШЕГО ВИДЕО ФАЙЛА ⬆️ -->
+            Ваш браузер не поддерживает видео.
+        </video>
+    </div>
+
+    <div class="buttons-container">
+        <button class="action-button yes-button" onclick="handleYesClick()">ДА!</button>
+        <button class="action-button no-button" id="noButton" onclick="handleNoClick()">НЕТ</button>
+    </div>
+
+    <script>
+        let isSoundOn = false;
+        let noButtonClicked = false;
+        const video = document.getElementById('fullscreen-video');
+        const audio = document.getElementById('background-audio');
+        const soundButton = document.getElementById('soundButton');
+        const modalOverlay = document.getElementById('modalOverlay');
+        const noButton = document.getElementById('noButton');
+        const photoContainer = document.getElementById('photoContainer');
+        const fullscreenPhoto = document.getElementById('fullscreen-photo');
+        const backButton = document.getElementById('backButton');
+
+        function handleYesClick() {
+            // Синхронизируем громкость аудио с видео
+            if (!video.muted) {
+                audio.volume = 1.0;
+            } else {
+                audio.volume = 0;
+            }
+            
+            // Убедимся, что аудио играет
+            audio.play().catch(e => {
+                console.log('Аудио автозапуск заблокирован');
+            });
+            
+            // Загружаем и показываем фото сразу
+            fullscreenPhoto.src = 'photo.jpg';
+            
+            // Показываем контейнер с фото
+            photoContainer.style.display = 'flex';
+            
+            // Скрываем видео и кнопки
+            video.style.display = 'none';
+            document.querySelector('.buttons-container').style.display = 'none';
+            soundButton.style.display = 'none';
+            
+            // Показываем кнопку "Назад"
+            backButton.style.display = 'block';
+            
+            // Продолжаем играть музыку
+            audio.play().catch(e => console.log('Аудио продолжает играть'));
+        }
+
+        function handleNoClick() {
+            if (!noButtonClicked) {
+                modalOverlay.style.display = 'flex';
+                noButton.classList.add('hidden');
+                noButtonClicked = true;
+            }
+        }
+
+        function goBackToVideo() {
+            // Возвращаемся к видео
+            photoContainer.style.display = 'none';
+            video.style.display = 'block';
+            document.querySelector('.buttons-container').style.display = 'flex';
+            soundButton.style.display = 'block';
+            backButton.style.display = 'none';
+            
+            // Продолжаем музыку
+            audio.play().catch(e => console.log('Аудио продолжает играть'));
+        }
+
+        function closeModal() {
+            modalOverlay.style.display = 'none';
+        }
+
+        function toggleSound() {
+            isSoundOn = !isSoundOn;
+            video.muted = !isSoundOn;
+            audio.muted = !isSoundOn;
+            
+            if (isSoundOn) {
+                soundButton.textContent = '🔊';
+                video.volume = 1.0;
+                audio.volume = 1.0;
+                audio.play().catch(e => {
+                    console.log('Аудио не запустилось автоматически');
+                });
+            } else {
+                soundButton.textContent = '🔇';
+                audio.volume = 0;
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const tapMessage = document.getElementById('tapMessage');
+
+            // Начинаем с выключенным звуком
+            video.muted = true;
+            video.volume = 0;
+            audio.muted = true;
+            audio.volume = 0;
+
+            // Пытаемся автоматически запустить видео
+            video.play().then(() => {
+                // Успешный автозапуск
+            }).catch(error => {
+                tapMessage.style.display = 'block';
+            });
+
+            // Запуск по клику на видео
+            video.addEventListener('click', function() {
+                video.play();
+                tapMessage.style.display = 'none';
+                audio.play().catch(e => {
+                    console.log('Аудио требует взаимодействия');
+                });
+            });
+
+            // Синхронизация звука видео и аудио
+            video.addEventListener('volumechange', function() {
+                audio.volume = video.volume;
+                audio.muted = video.muted;
+            });
+
+            // Скрываем сообщение когда видео начинает играть
+            video.addEventListener('play', function() {
+                tapMessage.style.display = 'none';
+            });
+
+            // Закрытие модального окна по клику на overlay
+            modalOverlay.addEventListener('click', function(e) {
+                if (e.target === modalOverlay) {
+                    closeModal();
+                }
+            });
+
+            // Автозапуск аудио при первом взаимодействии
+            document.addEventListener('click', function initAudio() {
+                audio.play().catch(e => {
+                    // Игнорируем ошибки автозапуска
+                });
+                document.removeEventListener('click', initAudio);
+            });
+        });
+    </script>
+</body>
+</html>
